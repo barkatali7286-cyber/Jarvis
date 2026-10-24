@@ -2,7 +2,6 @@ package com.jarvis.app
 
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.hardware.camera2.CameraManager
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -35,26 +34,24 @@ object Commands {
             t.contains("torch on") || t.contains("light jalao") -> {
                 return try {
                     val cm = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
-                    val id = cm.cameraIdList.getOrNull(0)
-                    if (id != null) {
-                        cm.setTorchMode(id, true)
+                    val ids = cm.cameraIdList
+                    if (ids.isNotEmpty()) {
+                        cm.setTorchMode(ids[0], true)
                     }
                     "Torch on kar di hai boss."
                 } catch (e: Exception) {
-                    e.printStackTrace()
                     "Torch on nahi ho payi boss."
                 }
             }
             t.contains("torch off") || t.contains("light bujhaao") -> {
                 return try {
                     val cm = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
-                    val id = cm.cameraIdList.getOrNull(0)
-                    if (id != null) {
-                        cm.setTorchMode(id, false)
+                    val ids = cm.cameraIdList
+                    if (ids.isNotEmpty()) {
+                        cm.setTorchMode(ids[0], false)
                     }
                     "Torch off kar di hai boss."
                 } catch (e: Exception) {
-                    e.printStackTrace()
                     "Torch off nahi ho payi boss."
                 }
             }
