@@ -105,7 +105,7 @@ class JarvisService : Service(), TextToSpeech.OnInitListener {
             }
             override fun onError(id: String?) { onDone(id) }
         })
-        again(300)
+        again(300L)
     }
 
     private fun say(t: String, then: (() -> Unit)?) {
@@ -132,14 +132,14 @@ class JarvisService : Service(), TextToSpeech.OnInitListener {
             override fun onEndOfSpeech() {}
             override fun onPartialResults(b: Bundle?) {}
             override fun onEvent(t: Int, b: Bundle?) {}
-            override fun onError(e: Int) { again(if (command) 1000 else 600) }
+            override fun onError(e: Int) { again(if (command) 1000L else 600L) }
             override fun onResults(b: Bundle?) {
                 val t = b?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()
-                if (t.isNullOrBlank()) { again(300); return }
+                if (t.isNullOrBlank()) { again(300L); return }
                 if (command) { handle(t); return }
                 val low = t.lowercase()
                 val w = wakeWords.firstOrNull { low.contains(it) }
-                if (w == null) { again(300); return }
+                if (w == null) { again(300L); return }
                 val cmd = low.substringAfter(w).trim()
                 if (cmd.length > 2) handle(cmd) else say("जी, बोलिए") { listen(true) }
             }
@@ -152,12 +152,12 @@ class JarvisService : Service(), TextToSpeech.OnInitListener {
 
     private fun handle(text: String) {
         val local = Commands.run(this, text.lowercase())
-        if (local != null) { say(local) { again(300) }; return }
+        if (local != null) { say(local) { again(300L) }; return }
         Thread {
             val reply = try { Brain.ask(history, text) } catch (e: Exception) { "इंटरनेट में दिक्कत लग रही है" }
             main.post {
                 history.add(text to reply)
-                say(reply) { again(300) }
+                say(reply) { again(300L) }
             }
         }.start()
     }
@@ -220,10 +220,6 @@ object Commands {
         if (name.isBlank()) return "किसे कॉल करना है?"
         if (c.checkSelfPermission(Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED)
             return "कॉन्टैक्ट की अनुमति दीजिए"
-            private fun call(c: Context, name: String): String {
-        if (name.isBlank()) return "किसे कॉल करना है?"
-        if (c.checkSelfPermission(Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED)
-            return "कॉन्टैक्ट की अनुमति दीजिए"
         val cur = c.contentResolver.query(
             ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
             arrayOf(
@@ -234,17 +230,6 @@ object Commands {
             arrayOf("%$name%"),
             null
         )
-        cur?.use {
-            if (it.moveToFirst()) {
-                val n = it.getString(0)
-                val num = it.getString(1)
-                go(c, Intent(Intent.ACTION_CALL, Uri.parse("tel:" + Uri.encode(num))))
-                return "$n को कॉल लगा रहा हूँ"
-            }
-        }
-        return "$name नाम का कॉन्टैक्ट नहीं मिला"
-            }
-            "${P.DISPLAY_NAME} LIKE ?", arrayOf("%$name%"), null)
         cur?.use {
             if (it.moveToFirst()) {
                 val n = it.getString(0)
