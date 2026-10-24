@@ -2,6 +2,7 @@ package com.jarvis.app
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.hardware.camera2.CameraManager
 import java.text.SimpleDateFormat
 import java.util.Date
