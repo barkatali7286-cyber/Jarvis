@@ -220,8 +220,30 @@ object Commands {
         if (name.isBlank()) return "किसे कॉल करना है?"
         if (c.checkSelfPermission(Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED)
             return "कॉन्टैक्ट की अनुमति दीजिए"
-        val P = ContactsContract.CommonDataKinds.Phone
-        val cur = c.contentResolver.query(P.CONTENT_URI, arrayOf(P.DISPLAY_NAME, P.NUMBER),
+            private fun call(c: Context, name: String): String {
+        if (name.isBlank()) return "किसे कॉल करना है?"
+        if (c.checkSelfPermission(Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED)
+            return "कॉन्टैक्ट की अनुमति दीजिए"
+        val cur = c.contentResolver.query(
+            ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+            arrayOf(
+                ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
+                ContactsContract.CommonDataKinds.Phone.NUMBER
+            ),
+            ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " LIKE ?",
+            arrayOf("%$name%"),
+            null
+        )
+        cur?.use {
+            if (it.moveToFirst()) {
+                val n = it.getString(0)
+                val num = it.getString(1)
+                go(c, Intent(Intent.ACTION_CALL, Uri.parse("tel:" + Uri.encode(num))))
+                return "$n को कॉल लगा रहा हूँ"
+            }
+        }
+        return "$name नाम का कॉन्टैक्ट नहीं मिला"
+            }
             "${P.DISPLAY_NAME} LIKE ?", arrayOf("%$name%"), null)
         cur?.use {
             if (it.moveToFirst()) {
