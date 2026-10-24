@@ -283,4 +283,5 @@ object Brain {
         val raw = conn.inputStream.bufferedReader().use { it.readText() }
         return try {
             JSONObject(raw).getJSONArray("choices").getJSONObject(0).getJSONObject("message").getString("content").trim()
+
             
