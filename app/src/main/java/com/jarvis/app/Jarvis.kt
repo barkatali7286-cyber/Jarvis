@@ -284,4 +284,5 @@ object Brain {
         return try {
             JSONObject(raw).getJSONArray("choices").getJSONObject(0).getJSONObject("message").getString("content").trim()
 
+
             
