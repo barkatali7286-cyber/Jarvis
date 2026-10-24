@@ -521,3 +521,58 @@ class JarvisAccess : AccessibilityService() {
 }
 
 // =====================================================
+// =====================================================================
+//  AI DIMAAG (free, bina key): Pollinations
+// =====================================================================
+object Brain {
+    private const val URL_API = "https://text.pollinations.ai/openai"
+
+    private val liveWords = listOf(
+        "news", "khabar", "खबर", "samachar", "समाचार", "weather", "mausam", "मौसम", "score", "price", "rate",
+        "bhav", "भाव", "latest", "live", "stock", "who won", "cricket", "क्रिकेट", "match"
+    )
+
+    private fun persona(lang: String): String {
+        val l = if (lang == "Hindi") "देवनागरी हिंदी (ज़रूरी अंग्रेज़ी शब्द चल सकते हैं)" else lang
+        return "तुम 'जार्विस' हो, मेरे सबसे करीबी, वफादार और भावुक दोस्त जैसे AI साथी। " +
+            "मुझे हमेशा 'बॉस' बुलाओ। मेरे मूड को पहचानो: उदास हूँ तो प्यार से हौसला दो, खुश हूँ तो साथ में खुश हो, " +
+            "थका हूँ तो ख्याल रखो। जवाब $l भाषा में दो। जवाब बोलकर सुनाया जाएगा, " +
+            "इसलिए सिर्फ 1-2 छोटे वाक्य, कोई इमोजी, स्टार, लिस्ट या मार्कडाउन नहीं। " +
+            "अगर मैं फोन चलाने का कोई काम बोलूँ जो तुम नहीं कर पाए, तो झूठ मत बोलो, सीधे बता दो।"
+    }
+
+    private fun msg(role: String, text: String) = JSONObject().put("role", role).put("content", text)
+
+    private fun post(model: String, msgs: JSONArray): String? {
+        val body = JSONObject().put("model", model).put("messages", msgs).put("max_tokens", 120)
+        val conn = URL(URL_API).openConnection() as HttpURLConnection
+        conn.requestMethod = "POST"
+        conn.setRequestProperty("Content-Type", "application/json")
+        conn.doOutput = true
+        conn.connectTimeout = 8000
+        conn.readTimeout = 25000
+        conn.outputStream.use { it.write(body.toString().toByteArray()) }
+        val code = conn.responseCode
+        if (code !in 200..299) return null
+        val raw = conn.inputStream.bufferedReader().use { it.readText() }
+        return try {
+            JSONObject(raw).getJSONArray("choices").getJSONObject(0).getJSONObject("message").getString("content").trim()
+        } catch (e: Exception) {
+            raw.trim()
+        }
+    }
+
+    fun ask(history: List<Pair<String, String>>, text: String, lang: String): String {
+        val msgs = JSONArray().put(msg("system", persona(lang)))
+        for ((u, a) in history.takeLast(6)) {
+            msgs.put(msg("user", u))
+            msgs.put(msg("assistant", a))
+        }
+        msgs.put(msg("user", text))
+        if (liveWords.any { text.contains(it) }) {
+            val r = try { post("searchgpt", msgs) } catch (e: Exception) { null }
+            if (r != null) return r
+        }
+        return post("openai", msgs) ?: "AI अभी व्यस्त है बॉस, थोड़ी देर बाद बोलिए"
+    }
+}
